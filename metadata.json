@@ -1,0 +1,6 @@
+{
+  "name": "Ecualizador Studio",
+  "description": "Aplicación web progresiva (PWA) de ecualizador de audio instalable en dispositivos móviles y escritorio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

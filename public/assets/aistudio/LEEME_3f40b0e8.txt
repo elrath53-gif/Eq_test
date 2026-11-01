@@ -1,0 +1,11 @@
+ESTUDIO EQ - PWA
+
+1) Sube TODA esta carpeta (index.html, manifest.json, sw.js, carpeta icons) a un hosting HTTPS gratis:
+   - Netlify: app.netlify.com/drop  (arrastra la carpeta)
+   - o GitHub Pages / Cloudflare Pages
+2) Abre el link en el celular:
+   - iPhone (Safari): Compartir > Anadir a pantalla de inicio
+   - Android (Chrome): menu > Instalar app
+3) Abre la app una vez con internet para que guarde las fuentes; despues funciona sin conexion.
+
+Nota: necesita HTTPS (o localhost). No funciona abriendo el archivo directo.

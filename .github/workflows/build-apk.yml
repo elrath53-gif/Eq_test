@@ -1,0 +1,72 @@
+name: Compilar APK Estudio EQ
+
+on:
+  push:
+    branches: ['**']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Generar Estudio-EQ.apk
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Preparar Android SDK y Gradle 8.7
+        run: |
+          set -e
+          if [ -z "$ANDROID_HOME" ] || [ ! -d "$ANDROID_HOME" ]; then
+            export ANDROID_HOME="$HOME/android-sdk"
+            mkdir -p "$ANDROID_HOME/cmdline-tools"
+            curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o /tmp/cmdtools.zip
+            unzip -q /tmp/cmdtools.zip -d "$ANDROID_HOME/cmdline-tools"
+            mv "$ANDROID_HOME/cmdline-tools/cmdline-tools" "$ANDROID_HOME/cmdline-tools/latest"
+          fi
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+
+          SDKMGR=$(find "$ANDROID_HOME" -name sdkmanager | head -n 1)
+          if [ -n "$SDKMGR" ]; then
+            yes | "$SDKMGR" --licenses > /dev/null || true
+            "$SDKMGR" "platform-tools" "platforms;android-34" "build-tools;34.0.0" > /dev/null
+          fi
+
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.7-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp
+
+      - name: Compilar APK Nativo
+        working-directory: android
+        run: /tmp/gradle-8.7/bin/gradle assembleRelease --no-daemon --stacktrace
+
+      - name: Preparar archivo Estudio-EQ.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk Estudio-EQ.apk
+
+      - name: Subir APK en Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: Estudio-EQ-APK
+          path: Estudio-EQ.apk
+          if-no-files-found: error
+
+      - name: Publicar descarga directa en Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view apk-lista >/dev/null 2>&1; then
+            gh release create apk-lista Estudio-EQ.apk \
+              --title "Estudio EQ — Descarga directa APK" \
+              --notes "Toca Estudio-EQ.apk abajo en Assets para descargar e instalar la app nativa en tu celular Android."
+          else
+            gh release upload apk-lista Estudio-EQ.apk --clobber
+          fi
